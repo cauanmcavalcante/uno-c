@@ -1,46 +1,45 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
+#include <time.h>
+#include "cartas.h"
 #include "jogadores.h"
 
-NodoJogador* criarJogador(const char* nome) {
-    NodoJogador* novo = (NodoJogador*)malloc(sizeof(NodoJogador));
-    strcpy(novo->jogador.nome, nome);
-    novo->jogador.mao = NULL;
-    novo->prox = novo; // fila circular
-    return novo;
-}
-
-void adicionarJogador(NodoJogador** fila, const char* nome) {
-    NodoJogador* novo = criarJogador(nome);
-
-    if (*fila == NULL) {
-        *fila = novo;
-    } else {
-        NodoJogador* temp = *fila;
-        while (temp->prox != *fila) {
-            temp = temp->prox;
-        }
-        temp->prox = novo;
-        novo->prox = *fila;
+void distribuirCartas(Jogador* jogador) {
+    for (int i = 0; i < 5; i++) {
+        Carta c = {rand() % 4, rand() % 10};
+        adicionarCarta(&jogador->mao, c);
     }
 }
 
-Jogador* proximoJogador(NodoJogador** fila) {
-    *fila = (*fila)->prox;
-    return &(*fila)->jogador;
-}
+int main() {
+    srand(time(NULL));
 
-void imprimirMao(Jogador* jogador) {
-    printf("Mão de %s:\n", jogador->nome);
-    NodoCarta* atual = jogador->mao;
-    int i = 0;
+    NodoJogador* fila = NULL;
 
-    while (atual) {
-        printf("%d: ", i);
-        imprimirCarta(atual->carta);
-        printf("\n");
+    adicionarJogador(&fila, "Alice");
+    adicionarJogador(&fila, "Bob");
+
+    NodoJogador* atual = fila;
+    do {
+        distribuirCartas(&atual->jogador);
         atual = atual->prox;
-        i++;
+    } while (atual != fila);
+
+    for (int turno = 0; turno < 2; turno++) {
+        Jogador* jogador = proximoJogador(&fila);
+
+        printf("\nÉ a vez de %s\n", jogador->nome);
+        imprimirMao(jogador);
+
+        printf("Jogue uma carta (índice): ");
+        int indice;
+        scanf("%d", &indice);
+
+        Carta jogada = removerCarta(&jogador->mao, indice);
+        printf("%s jogou ", jogador->nome);
+        imprimirCarta(jogada);
+        printf("\n");
     }
+
+    return 0;
 }
